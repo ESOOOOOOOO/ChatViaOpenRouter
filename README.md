@@ -32,7 +32,7 @@
 <p align="center">
   <em>
     The LLM landscape is fiercely competitive, and I often switch between models to find the best fit for my task.<br/>
-    I didn’t want to pay $20/month for several subscriptions. Then I found <b>OpenRouter</b> — a provider that lets you access most major models at their original prices with a single API key.<br/>
+    I didn’t want to pay $20/month for several subscriptions. Then I found <b>OpenRouter</b> — a provider that lets you access most major models at their original prices, as well as use all currently free models.<br/>
     There’s no official desktop client yet, so I built this <b>GPT desktop client</b>.<br/>
     Just purchase an API key on OpenRouter (Alipay supported), paste it in the app, and you’re good to go. I do not charge any in-app fees — enjoy!
   </em>
@@ -53,15 +53,20 @@
 - 🔎 **Web search**
 - 🧩 **Prompt management**
 - 📦 **Tiny installer**
-- 🖥️ **Cross-platform (Windows / macOS / Linux)**
+- 🖥️ **Windows only**
 
 ---
 
 ### 🚀 Quick Start
 
-#### 1) Download & Install
-- Grab the installer for your OS from **Releases** (tiny size, fast startup).
-- Windows: **.msi / .exe**; macOS: **.dmg / .app**; Linux: **.AppImage / .deb / .rpm**.
+#### 1) Get OpenRouter API Key
+- Visit the official OpenRouter website: [https://openrouter.ai/](https://openrouter.ai/)  
+- Sign up and obtain your **API Key** (Alipay supported).  
+- 💡 Even if you don’t top up, you can directly use all available **free models**.
+
+#### 2) Download & Install
+- Grab the installer for Windows from **Releases** (tiny size, fast startup).  
+- Supported formats: **.msi / .exe**
 
 > Built with Tauri on the system WebView — low resource usage and instant launch.
 
@@ -73,14 +78,14 @@
 
 > Still seeing UI/launch issues? Update GPU drivers or try running on the discrete GPU.
 
-#### 2) Configure OpenRouter
+#### 3) Configure OpenRouter
 1. Open **Settings → API-KEY** (or the first-run setup wizard).  
 2. Paste your **OpenRouter API Key**.  
-3. Pick a default model (switch anytime).
+3. Pick a default model (switch anytime).  
 
-> A popular model list is built-in; you can also enter any available model name manually.
+> A popular model list is built-in; you can also enter any available model name manually.  
 
-#### 3) Start Chatting
+#### 4) Start Chatting
 - Type normally or drag files into the window/floating panel  
 - `/` for **prompt templates**, `@` for **actions**  
 - `Ctrl/⌘ + Enter` to send, `Shift + Enter` for newline
@@ -133,9 +138,9 @@ If you like this project, please **Star** ⭐ and share — thanks!
 <p align="center">
   <em>
     现在的 LLM 竞争异常激烈，我常常需要在多个模型之间切换，以便为当下任务选择最合适的那个。<br/>
-    但我并不想为不同模型分别支付每月 20 美金的订阅费用。直到我发现了 <b>OpenRouter</b> —— 你可以用一个 API Key、以原价调用几乎所有主流大模型的服务商。<br/>
+    但我并不想为不同模型分别支付每月 20 美金的订阅费用。直到我发现了 <b>OpenRouter</b> —— 你可以用一个 API Key、以原价调用几乎所有主流大模型的服务商，以及使用当前正在免费的所有模型。<br/>
     他们虽未推出官方桌面客户端，但我已经迫不及待，于是开发了这款 <b>GPT 桌面客户端</b>。<br/>
-    你只需在 OpenRouter 官网购买 API Key（支持支付宝），在应用内粘贴配置即可开始使用；本人不会在应用内收取任何费用。现在就享受它吧！
+    你只需在 OpenRouter 官网申请 API Key（支持支付宝），在应用内粘贴配置即可开始使用；本人不会在应用内收取任何费用。现在就享受它吧！
   </em>
 </p>
 
@@ -154,15 +159,20 @@ If you like this project, please **Star** ⭐ and share — thanks!
 - 🔎 **联网搜索**
 - 🧩 **提示词管理**
 - 📦 **超小安装包**
-- 🖥️ **跨平台（Windows / macOS / Linux）**
+- 🖥️ **仅支持 Windows**
 
 ---
 
 ### 🚀 快速上手
 
-#### 1) 下载与安装
-- 前往 **Releases** 页面下载对应平台的安装包（体积小、启动快）。
-- Windows 使用 **.msi / .exe**；macOS 使用 **.dmg / .app**；Linux 使用 **.AppImage / .deb / .rpm**。
+#### 1) 获取 OpenRouter API Key
+- 打开 OpenRouter 官网：[https://openrouter.ai/](https://openrouter.ai/)  
+- 注册账号并申请 **API Key**（支持支付宝）。  
+- 💡 即使不充值，你也可以直接使用所有可用的**免费模型**。
+
+#### 2) 下载与安装
+- 前往 **Releases** 页面下载 Windows 安装包（体积小、启动快）。  
+- 支持格式：**.msi / .exe**
 
 > Tauri 基于系统 WebView，资源占用低、启动飞快。
 
@@ -174,14 +184,14 @@ If you like this project, please **Star** ⭐ and share — thanks!
 
 > 若仍有启动/显示问题，可尝试更新显卡驱动或切换到独显运行。
 
-#### 2) 配置 OpenRouter Key
+#### 3) 配置 OpenRouter Key
 1. 在应用内打开 **设置 → API-KEY**（或首次启动的引导页）  
 2. 粘贴你的 **OpenRouter API Key**  
-3. 选择默认模型（可随时切换）
+3. 选择默认模型（可随时切换）  
 
-> 内置热门模型清单，也支持手动输入任意可用模型名称。
+> 内置热门模型清单，也支持手动输入任意可用模型名称。  
 
-#### 3) 开始对话
+#### 4) 开始对话
 - 直接输入问题，或拖拽文件到窗口/悬浮窗  
 - 使用 `/` 呼出**提示词模板**，或 `@` 选择**常用指令**  
 - `Ctrl/⌘ + Enter` 发送，`Shift + Enter` 换行
