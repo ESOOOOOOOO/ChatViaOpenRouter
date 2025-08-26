@@ -21,11 +21,21 @@
 
 ### 📸 截图
 
-- **全屏使用场景（桌面端）**  
-  <img src="./images/full.jpg" alt="Full Screen" />
+<div style="display: flex; justify-content: center; gap: 12px;">
+  <img src="./images/full.jpg" alt="Full Screen" width="48%" />
+  <img src="./images/small.jpg" alt="Compact Screen" width="48%" />
+</div>
 
-- **小屏/紧凑模式**  
-  <img src="./images/small.jpg" alt="Compact Screen" />
+<p align="center">
+  <em>
+    如今 LLM 模型竞争异常激烈，我常常需要在多个模型之间切换，寻找最适合当下任务的那一个。  
+    但我又不想为不同模型分别支付每月 20 美金的订阅费用。直到我发现了 <b>OpenRouter</b> ——  
+    一个可以用单一 API Key、原价调用几乎所有大模型的服务商。  
+    虽然他们没有推出官方客户端，但我已经迫不及待，于是便开发了这款 <b>GPT 客户端</b>。  
+    你只需在 OpenRouter 官网购买 API Key（支持支付宝），在应用内配置即可开始使用。  
+    本人不会在应用内收取任何额外费用 —— 现在就开始畅享吧！
+  </em>
+</p>
 
 ---
 
@@ -86,11 +96,23 @@ GPL-3.0
 
 ### 📸 Screenshots
 
-- **Full-screen (Desktop)**  
-  <img src="./images/full.jpg" alt="Full Screen" />
+<div style="display: flex; justify-content: center; gap: 12px;">
+  <img src="./images/full.jpg" alt="Full Screen" width="48%" />
+  <img src="./images/small.jpg" alt="Compact Screen" width="48%" />
+</div>
 
-- **Compact / Small-screen Mode**  
-  <img src="./images/small.jpg" alt="Compact Screen" />
+<p align="center">
+  <em>
+    The competition among LLMs is fiercer than ever, and I often find myself switching between  
+    different models to pick the best one for my tasks. However, I didn’t want to pay $20/month  
+    for multiple subscriptions. That’s when I discovered <b>OpenRouter</b> — a provider that lets you  
+    access almost all major models with a single API Key at their original prices.  
+    While they don’t offer an official desktop client, I couldn’t wait any longer,  
+    so I built this <b>GPT Client</b>.  
+    Simply purchase an API Key on OpenRouter’s website (Alipay supported), configure it in the app,  
+    and start chatting instantly. I don’t charge any extra fees inside the app — enjoy it freely!
+  </em>
+</p>
 
 ---
 
@@ -152,4 +174,3 @@ Feature ideas or found a bug? I’d love to hear from you:
 
 如果这个项目对你有帮助，欢迎 **Star** ⭐ 并分享给同事朋友！  
 If you like it, please **Star** ⭐ and share—thanks!
-
