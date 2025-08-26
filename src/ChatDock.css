@@ -1,0 +1,293 @@
+/* 根节点占满视口，避免多余滚动条 */
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 主题色（可按需调整） */
+:root {
+  --assistant-bg: #FFF7E0;
+  /* 淡米黄色 */
+  --assistant-bg-hover: #FFF0CC;
+  /* 悬停加深 */
+  --user-bg: #EDEDED;
+  /* 与原灰色相近 */
+  --user-bg-hover: #E2E2E2;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+/* 布局容器 */
+
+.chat-dock-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 40px);
+  /* background: rgba(255, 255, 255, 0.8); */
+  /* background: radial-gradient(circle at 20% 20%, #ffe0b2, transparent 40%),
+              radial-gradient(circle at 80% 30%, #c5e1a5, transparent 45%),
+              radial-gradient(circle at 40% 80%, #b3e5fc, transparent 40%),
+              #f0f0f0; */
+  /* background: radial-gradient(circle at 20% 20%, #d2b48c, transparent 40%),
+    radial-gradient(circle at 80% 30%, #6b8e9b, transparent 45%),
+    radial-gradient(circle at 40% 80%, #8f7f6b, transparent 40%),
+    #e8e8e8; */
+  /* background: radial-gradient(circle at 20% 20%, #6b7a62, transparent 40%),  
+            radial-gradient(circle at 80% 30%, #3f4a3c, transparent 45%), 
+            radial-gradient(circle at 40% 80%, #8b9b86, transparent 40%),  
+            #e7e8e5;     */
+  background: radial-gradient(circle at 20% 20%, #dcb890, transparent 60%),
+    radial-gradient(circle at 80% 30%, #7a9ca8, transparent 65%),
+    radial-gradient(circle at 40% 80%, #a3907a, transparent 60%),
+    #e1d5c6;
+  background-size: cover;
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 0px;
+  box-shadow:
+    0px 0px 1px rgba(0, 0, 0, 0.2),
+    0px 1px 3px rgba(0, 0, 0, 0.1),
+    0px 5px 15px rgba(0, 0, 0, 0.07),
+    0px 20px 40px rgba(0, 0, 0, 0.05);
+}
+
+.chat-dock-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: transparent;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 0px 8px 4px 8px;
+  border-radius: 12px 12px 0 0;
+}
+.chat-dock-header-expanded {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(249, 249, 249, 0.84);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 0px 8px 4px 8px;
+  border-radius: 12px 12px 0 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.chat-messages-container {
+  flex: 1;
+  padding: 0 20px 20px 20px;
+  border-radius: 12px;
+  min-height: 0;
+  overflow-y: auto;
+  position: relative;
+}
+
+.bubble-list-margin {
+  margin-top: 20px;
+}
+
+/* 输入区 */
+.chat-input-container {
+  padding: 10px 20px 20px 20px;
+  background: transparent;
+  border-top: 1px solid rgba(105, 50, 50, 0.06);
+}
+
+/* 清空按钮微动效 */
+.clear-chat-button {
+  opacity: 0.5;
+  transition: opacity 0.2s ease-in-out, transform 0.1s ease-in-out;
+}
+
+.clear-chat-button:hover {
+  opacity: 1;
+}
+
+/* 置顶按钮激活态 */
+.pined-button-active {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+.pined-button-active:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+/* --------------------------------------------------------------------------------------------- */
+/* 气泡内容：统一用自定义类而非强行覆盖 antd 内部类名 */
+
+.msg-content {
+  color: black;
+  border-radius: 18px;
+  transition: background-color 0.18s ease-in-out;
+}
+
+/* 用户气泡 */
+.msg-content.user {
+  background-color: var(--user-bg);
+}
+
+.msg-content.user:hover {
+  background-color: var(--user-bg-hover);
+}
+
+/* 助手气泡（淡米黄 & 悬停加深） */
+.msg-content.assistant {
+  background-color: var(--assistant-bg);
+}
+
+.msg-content.assistant:hover {
+  background-color: var(--assistant-bg-hover);
+}
+
+/* ----------------------------历史记录板块----------------------------------------------------------------- */
+
+
+/* 只作用于这个 popover */
+.history-popover .ant-popover-inner {
+  background: #f5f0ea;
+  /* ✅ 纯色背景 */
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 12px;
+  /* 与 overlayInnerStyle 一致，或直接只留任一处 */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+/* 标题栏去掉默认分割线，并保持透明背景 */
+.history-popover .ant-popover-title {
+  background: transparent;
+  border-bottom: none;
+  color: #3a3a3a;
+  /* 文本对比度 */
+}
+
+/* 内容文本颜色（可按你主题 token 调整） */
+.history-popover .ant-popover-inner-content {
+  color: #2f2f2f;
+}
+
+/* 箭头颜色需要单独同步背景色，否则会露底色 */
+.history-popover .ant-popover-arrow:before {
+  background: #c9b6a3;
+}
+
+/* 如果是 antd v5 的自定义变量，可补一手（可选） */
+.history-popover .ant-popover-arrow {
+  --antd-arrow-background-color: #c9b6a3;
+}
+
+
+/***********************************聊天文件展示***********************************/
+/* ====== 气泡内容基础内边距与分组 ====== */
+.msg-content {
+  border-radius: 18px;
+  /* 颜色仍沿用你已有的变量与角色差异 */
+  /* 关键：让内部内容不贴边 */
+  padding: 0;
+  /* 外层由 antd Bubble 的 content padding 控制 */
+}
+
+.msg-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  /* 附件区与文本区的间距 */
+}
+
+/* ====== 附件统一容器（在上）====== */
+.msg-attachments {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+/* 单个附件外层，方便统一投影/圆角 */
+.msg-attachment {
+  background: transparent;
+  border-radius: 18px;
+  padding: 6px;
+}
+
+/* 图片：自适应宽度，不贴边，有圆角与最大高度 */
+.msg-image {
+  width: 100%;
+  height: auto;
+  max-height: 380px;
+  /* 你也可改为 320/360 等 */
+  object-fit: contain;
+  display: block;
+  border-radius: 10px;
+  background: #fff;
+  /* 背景托底，避免透明图叠色 */
+}
+
+/* 文件卡片：与图片一致的圆角和留白（依赖外层 .msg-attachment） */
+.msg-attachment .ant-card,
+.msg-attachment .ant-card-body {
+  border-radius: 10px;
+}
+
+/* 音频：统一宽度与圆角 */
+.msg-audio {
+  width: 100%;
+  display: block;
+  border-radius: 8px;
+  outline: none;
+}
+
+/* 文本区（在下）与代码块等的间距控制 */
+.msg-texts>*+* {
+  margin-top: 8px;
+}
+
+/* 为了避免窄屏时内容顶边，给消息容器一点“安全内边距” */
+.chat-messages-container {
+  padding: 10px 20px 20px 20px;
+  /* 上边再给 10px，避免第一条消息顶格 */
+}
+
+/* 如果你想让助手/用户两种气泡在 hover 时也不突兀，可微调： */
+.msg-content.user,
+.msg-content.assistant {
+  transition: background-color 0.18s ease-in-out, box-shadow 0.18s ease-in-out;
+}
+
+.msg-content.user:hover,
+.msg-content.assistant:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+
+/* 针对 WebKit 内核（Chrome / Edge / Safari） */
+.chat-messages-container::-webkit-scrollbar {
+  width: 8px;           /* 滚动条宽度 */
+}
+
+.chat-messages-container::-webkit-scrollbar-track {
+  background: transparent; /* 轨道透明 */
+}
+
+.chat-messages-container::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.5); /* 滑块半透明白色，可自行调整 */
+  border-radius: 4px;
+}
+
+/* Firefox 的滚动条 */
+.chat-messages-container {
+  scrollbar-width: thin;                 /* 瘦一点 */
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent; 
+  /* thumb 半透明，轨道透明 */
+}
+
+.chat-messages-container:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.3);
+}

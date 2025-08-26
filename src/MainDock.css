@@ -1,0 +1,25 @@
+/* 让父容器占据整个可拖动区域 */
+.dock-wrapper {
+  position: fixed;
+  left: 10px;
+  bottom: 10px;
+  width: 60px;          /* ICON_SIZE */
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: transparent;
+  border-radius: 12px;
+}
+
+/* 关键点：把点击层标记为 “no‑drag”（等价于 data-tauri-drag-region="false") */
+.dock-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity .28s ease;
+  /* 下面这条是 Tauri/Electron 官方的写法，等价于 data-tauri-drag-region="false" */
+  -webkit-app-region: no-drag;   /* <‑‑ 让它不再被当作拖动区域 */
+  user-select: none;             /* 防止意外选中文本 */
+}

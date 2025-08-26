@@ -1,0 +1,66 @@
+/* 表格紧凑样式 */
+.compact-table .ant-table {
+  --cell-pad-y: 4px;
+  --cell-pad-x: 8px;
+}
+.compact-table .ant-table-thead > tr > th,
+.compact-table .ant-table-tbody > tr > td {
+  padding: var(--cell-pad-y) var(--cell-pad-x) !important;
+  line-height: 1.2 !important;
+}
+.compact-table .ant-table-tbody > tr.compact-row {
+  height: 28px;
+}
+
+/* 仅 store 标签具备删除按钮：默认隐藏，悬停显示 */
+.preset-chip .chip-close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  transform: translate(50%, -50%); /* 挂在右上角外沿，视觉更轻巧 */
+  width: 12px;
+  height: 12px;
+  padding: 0 !important;
+  display: none;                 /* 默认隐藏 */
+  border: none !important;
+  border-radius: 50%;
+  background: #ff4d4f !important; /* AntD 危险红 */
+  color: #fff !important;
+  box-shadow: 0 0 0 2px #fff;     /* 白描边，提升对比度 */
+  cursor: pointer;
+
+  /* 完全居中图标 */
+  display: none !important;
+  align-items: center;
+  justify-content: center;
+
+  /* 去掉默认按钮行高 */
+  line-height: 1 !important;
+}
+
+/* 悬停 chip 时显示关闭按钮 */
+.preset-chip:hover .chip-close,
+.preset-chip .chip-close:focus-visible {
+  display: inline-flex !important;
+}
+
+/* 图标尺寸&对齐 */
+.preset-chip .chip-close .anticon {
+  font-size: 12px;
+  display: block;
+  line-height: 1;
+}
+
+/* 交互反馈 */
+.preset-chip .chip-close:hover {
+  filter: brightness(0.95);
+}
+.preset-chip .chip-close:active {
+  transform: translate(50%, -50%) scale(0.95);
+}
+
+/* 键盘无鼠标操作时，focus 也应可见且有可访问性反馈 */
+.preset-chip .chip-close:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}

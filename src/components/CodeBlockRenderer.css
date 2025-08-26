@@ -1,0 +1,110 @@
+
+.markdown-content p {
+  margin-block-start: 0;
+  margin-block-end: 0;
+}
+
+.markdown-content {
+    padding: 12px 16px; /* 为普通文本添加内边距 */
+    line-height: 1.6;
+}
+
+.markdown-content p:last-child {
+    margin-bottom: 0;
+}
+
+.title-content p {
+  margin-block-start: 0;
+  margin-block-end: 0;
+}
+
+.title-content {
+    padding: 12px 16px 4px 16px; /* 为普通文本添加内边距 */
+    line-height: 1.6;
+}
+
+.title-content p:last-child {
+    margin-bottom: 0;
+}
+
+/* 整个代码块容器 */
+.code-block-container {
+    /*background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);*/
+    /* background: #FAF9F5; */
+    background: #f0eee6;
+    border-radius: 12px; /* 匹配气泡的圆角 */
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin: 0; /* 移除外边距，让它贴合气泡 */
+}
+
+/* 代码块头部 */
+.code-header {
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+    padding: 8px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.code-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* macOS 风格的红绿灯按钮 */
+.traffic-lights {
+    display: flex;
+    gap: 6px;
+}
+
+.traffic-lights .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.traffic-lights .green { background-color: #28ca42; }
+
+/* 语言名称 */
+.language-name {
+    color: #222222;
+    font-size: 13px;
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+    font-weight: 500;
+}
+
+/* 复制按钮 */
+.code-copy-btn {
+    color: #222222 !important; /* 使用 !important 覆盖 antd 默认颜色 */
+    background-color: transparent!important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 14px 8px;
+}
+
+.code-copy-btn:hover {
+    color: #000000 !important;
+    background-color: transparent !important;
+    border-color: #999999 !important;
+}
+
+.code-copy-btn .anticon-check {
+    color: #28ca42;
+}
+
+
+/* 代码内容区域 */
+.code-content {
+    position: relative;
+}
+
+.code-content pre.hljs {
+    margin: 0;
+    padding: 16px;
+    background: transparent;
+    font-size: 14px;
+    line-height: 1.6;
+    overflow-x: auto;
+}
