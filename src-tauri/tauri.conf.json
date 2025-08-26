@@ -1,0 +1,75 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "sengine",
+  "version": "0.2.2",
+  "identifier": "com.sengine.app",
+  "build": {
+    "beforeDevCommand": "bun run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "bun run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "SEngine",
+        "resizable": false,
+        "transparent": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "decorations": false,
+        "focus": false,
+        "acceptFirstMouse": true,
+        "shadow": false,
+        "center": true,
+        "visible": false,
+        "titleBarStyle": "Overlay",
+        "dragDropEnabled": false,
+         "width": 52,
+        "height": 52,
+        "minWidth": 52,
+        "minHeight": 52,
+        "maxWidth": 52,
+        "maxHeight": 52
+      },
+      {
+        "label": "chat",
+        "title": "ChatWindow",
+        "url": "/chat",
+        "visible": false,
+        "decorations": false,
+        "transparent": true,
+        "skipTaskbar": true,
+        "alwaysOnTop": true,
+        "resizable": true,
+        "focus": false,
+        "shadow": false,
+        "dragDropEnabled": false,
+        "height": 720,
+        "width": 360
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  },
+  "plugins": {
+    "shell": {
+      "all": false,
+      "execute": true,
+      "sidecar": false,
+      "open": false
+    }
+  }
+}
