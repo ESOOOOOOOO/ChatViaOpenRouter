@@ -1,5 +1,3 @@
-# Tauri + React + Typescript
-
 <p align="center">
   <img src="./images/icon.png" alt="App Icon" width="128" />
 </p>
@@ -154,3 +152,4 @@ Feature ideas or found a bug? I’d love to hear from you:
 
 如果这个项目对你有帮助，欢迎 **Star** ⭐ 并分享给同事朋友！  
 If you like it, please **Star** ⭐ and share—thanks!
+
