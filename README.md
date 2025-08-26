@@ -21,9 +21,9 @@
 
 ### 📸 截图
 
-<div style="display: flex; justify-content: center; gap: 12px;">
-  <img src="./images/full.jpg" alt="Full Screen" width="48%" />
-  <img src="./images/small.jpg" alt="Compact Screen" width="48%" />
+<div style="display: flex; justify-content: center; gap: 12px; align-items: flex-start;">
+  <img src="./images/full.jpg" alt="Full Screen" height="400px" />
+  <img src="./images/small.jpg" alt="Compact Screen" height="400px" />
 </div>
 
 <p align="center">
@@ -84,11 +84,6 @@
 
 ---
 
-### 📝 许可
-
-GPL-3.0
-
----
 
 ## English
 
@@ -96,9 +91,9 @@ GPL-3.0
 
 ### 📸 Screenshots
 
-<div style="display: flex; justify-content: center; gap: 12px;">
-  <img src="./images/full.jpg" alt="Full Screen" width="48%" />
-  <img src="./images/small.jpg" alt="Compact Screen" width="48%" />
+<div style="display: flex; justify-content: center; gap: 12px; align-items: flex-start;">
+  <img src="./images/full.jpg" alt="Full Screen" height="400px" />
+  <img src="./images/small.jpg" alt="Compact Screen" height="400px" />
 </div>
 
 <p align="center">
@@ -164,11 +159,6 @@ Feature ideas or found a bug? I’d love to hear from you:
 
 ---
 
-### 📝 License
-
- `GPL-3.0`
-
----
 
 #### Star & Share
 
