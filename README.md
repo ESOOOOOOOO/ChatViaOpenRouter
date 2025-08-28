@@ -34,7 +34,7 @@
     The LLM landscape is fiercely competitive, and I often switch between models to find the best fit for my task.<br/>
     I didn’t want to pay $20/month for several subscriptions. Then I found <b>OpenRouter</b> — a provider that lets you access most major models at their original prices, as well as use all currently free models.<br/>
     There’s no official desktop client yet, so I built this <b>GPT desktop client</b>.<br/>
-    Just purchase an API key on OpenRouter (Alipay supported), paste it in the app, and you’re good to go. I do not charge any in-app fees — enjoy!
+    You can now <b>apply for a free API key with one click</b> (to use free models), or purchase an API key on OpenRouter (Alipay supported), paste it in the app, and you’re good to go. I do not charge any in-app fees — enjoy!
   </em>
 </p>
 
@@ -48,7 +48,7 @@
 - 🧱 **Native code block rendering**
 - 🗂️ **Rich input media support**
 - 🪟 **Floating window**
-- 🌍 **30 system languages**
+- 🌍 **Multiple system languages supported**
 - 🕰️ **Conversation history**
 - 🔎 **Web search**
 - 🧩 **Prompt management**
@@ -62,7 +62,8 @@
 #### 1) Get OpenRouter API Key
 - Visit the official OpenRouter website: [https://openrouter.ai/](https://openrouter.ai/)  
 - Sign up and obtain your **API Key** (Alipay supported).  
-- 💡 Even if you don’t top up, you can directly use all available **free models**.
+- 💡 Even if you don’t top up, you can directly use all available **free models**.  
+- ⚡ Or simply click **“Get Free API Key”** in the app to instantly receive a key for free models.
 
 #### 2) Download & Install
 - Grab the installer for Windows from **Releases** (tiny size, fast startup).  
@@ -140,7 +141,7 @@ If you like this project, please **Star** ⭐ and share — thanks!
     现在的 LLM 竞争异常激烈，我常常需要在多个模型之间切换，以便为当下任务选择最合适的那个。<br/>
     但我并不想为不同模型分别支付每月 20 美金的订阅费用。直到我发现了 <b>OpenRouter</b> —— 你可以用一个 API Key、以原价调用几乎所有主流大模型的服务商，以及使用当前正在免费的所有模型。<br/>
     他们虽未推出官方桌面客户端，但我已经迫不及待，于是开发了这款 <b>GPT 桌面客户端</b>。<br/>
-    你只需在 OpenRouter 官网申请 API Key（支持支付宝），在应用内粘贴配置即可开始使用；本人不会在应用内收取任何费用。现在就享受它吧！
+    现在，你可以<b>一键申请免费的 API Key</b>（用于免费模型），也可以在 OpenRouter 官网申请付费 API Key（支持支付宝），粘贴到应用内即可使用；本人不会在应用内收取任何费用。现在就享受它吧！
   </em>
 </p>
 
@@ -154,7 +155,7 @@ If you like this project, please **Star** ⭐ and share — thanks!
 - 🧱 **原生代码块渲染**
 - 🗂️ **多种输入媒体支持**
 - 🪟 **悬浮窗**
-- 🌍 **30 种系统语言**
+- 🌍 **支持多种系统语言**
 - 🕰️ **历史记录**
 - 🔎 **联网搜索**
 - 🧩 **提示词管理**
@@ -168,7 +169,8 @@ If you like this project, please **Star** ⭐ and share — thanks!
 #### 1) 获取 OpenRouter API Key
 - 打开 OpenRouter 官网：[https://openrouter.ai/](https://openrouter.ai/)  
 - 注册账号并申请 **API Key**（支持支付宝）。  
-- 💡 即使不充值，你也可以直接使用所有可用的**免费模型**。
+- 💡 即使不充值，你也可以直接使用所有可用的**免费模型**。  
+- ⚡ 或者直接在应用中点击 **“一键获取免费 API Key”**，即可快速领取并使用免费模型。
 
 #### 2) 下载与安装
 - 前往 **Releases** 页面下载 Windows 安装包（体积小、启动快）。  
