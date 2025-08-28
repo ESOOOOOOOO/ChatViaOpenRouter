@@ -390,7 +390,7 @@ const ChatSender: React.FC<ChatSenderProps> = ({
             placeholder={(type) =>
               type === 'drop'
                 ? { title: 'Drop file here' }
-                : { icon: <CloudUploadOutlined />, title: 'Upload files', description: 'Click and choose files to upload' }
+                : { icon: <CloudUploadOutlined />, title: language.uploadFiles, description: language.uploadFilesTip }
             }
             getDropContainer={() => (headerOpen ? dropAreaRef.current! : undefined)}
             style={{ backdropFilter: 'none', background: 'transparent', borderRadius: 12 }}

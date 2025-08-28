@@ -1,17 +1,17 @@
 import React from 'react';
 import { Button, Divider, Flex, Typography, theme, Tag, Badge } from 'antd';
-import { CompressOutlined, ExpandOutlined, SettingOutlined, ToTopOutlined, VerticalAlignTopOutlined } from '@ant-design/icons';
+import { CompressOutlined, ExpandOutlined, SettingOutlined, SwapRightOutlined, ToTopOutlined, VerticalAlignTopOutlined } from '@ant-design/icons';
 import { truncateTextByVisualWidth } from '../utils/titleTruncater';
 import RenderMessageContent from './CodeBlockRenderer';
 import { SystemLanguageDto } from '../DTOs/systemLanguage.dto';
 // ⚠️ Tauri 2.x：使用 webviewWindow 包
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
-
+import { ModelDto } from '../DTOs/OpenRouterResponse.dto';
 const { Title } = Typography;
 
 export interface ChatHeaderProps {
   chatTitle: string;
-  currentModel: string;
+  currentModel: ModelDto | null;
   pined: boolean;
   expanded: boolean;
   onTogglePin: () => void;
@@ -19,13 +19,24 @@ export interface ChatHeaderProps {
   onOpenSettingModel: () => void;
   onToggleExpand: () => void;
   supportedFeature: Array<string>; // 允许上层随意传，这里做运行时过滤
+  supportedOutputFeature: Array<string>; // 允许上层随意传，这里做运行时过滤
   apiKeyReady: boolean;
   language: SystemLanguageDto;
   /** ✅ 新增：拖拽状态回传，父组件可用来拦截“失焦隐藏” */
   onDraggingChange?: (dragging: boolean) => void;
 }
 
-const ALLOWED_FEATURES = new Set(['text', 'image', 'file', 'audio']);
+const MEDIA_KEYS = ['text', 'image', 'file', 'audio'] as const;
+type MediaKey = typeof MEDIA_KEYS[number];
+
+// ✅ 类型守卫：把 string 收窄为 MediaKey
+const isMediaKey = (x: string): x is MediaKey =>
+  MEDIA_KEYS.includes(x as MediaKey);
+
+// ✅（可选但推荐）在类型层面确保 language 至少包含这 4 个键都是 string
+type LangForMedia = Pick<SystemLanguageDto, MediaKey>;
+
+const ALLOWED_FEATURES = new Set<MediaKey>(MEDIA_KEYS); // ✅ 指定集合元素类型
 
 /** 判断是否是交互控件：命中则不触发拖拽 */
 function isInteractive(target: EventTarget | null): boolean {
@@ -42,7 +53,6 @@ function isInteractive(target: EventTarget | null): boolean {
       'select',
       'textarea',
       '.ant-btn',                      // AntD 按钮
-      '.ant-tag',                      // AntD Tag
       '.ant-badge',                    // AntD Badge
       '.ant-switch',
       '.ant-checkbox',
@@ -61,18 +71,32 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   onOpenSettingModel,
   onToggleExpand,
   supportedFeature = [],
+  supportedOutputFeature = [],
   apiKeyReady,
   onDraggingChange,
+  language
 }) => {
   const { token } = theme.useToken();
   const iconStyle = { fontSize: 16, color: token.colorText } as const;
 
-  // 归一化 + 过滤非法值 + 去重
   const featureTags = Array.from(
     new Set(
-      (supportedFeature || [])
+      (supportedFeature ?? [])
         .map(f => String(f).toLowerCase().trim())
+        .filter(isMediaKey)               // <-- 现在是 MediaKey[]
         .filter(f => ALLOWED_FEATURES.has(f))
+        .map(k => (language as LangForMedia)[k]) // <-- 安全索引
+    )
+  );
+
+  // 如果你对输出能力也要做同样映射，顺手也处理一下：
+  const featureTagsOutput = Array.from(
+    new Set(
+      (supportedOutputFeature ?? [])
+        .map(f => String(f).toLowerCase().trim())
+        .filter(isMediaKey)
+        .filter(f => ALLOWED_FEATURES.has(f))
+        .map(k => (language as LangForMedia)[k])
     )
   );
 
@@ -113,7 +137,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
       style={{
         WebkitUserSelect: 'none',
         userSelect: 'none',
-        cursor: expanded?"default":"move" // 统一给个手势反馈
+        cursor: expanded ? "default" : "move" // 统一给个手势反馈
       }}
       role="toolbar"
       aria-label="Chat header"
@@ -159,13 +183,13 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
                 }}
                 onClick={onOpenBotModel}
               >
-                {currentModel || "Loading..."}
+                {currentModel?.id || "Loading..."}
               </Button>
 
               {featureTags.map((f) => (
                 <Tag
                   {...noDragProps}
-                  key={f}
+                  key={`in-${f}`}
                   bordered
                   style={{
                     opacity: 1,
@@ -183,6 +207,30 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
                   {f}
                 </Tag>
               ))}
+              {(currentModel != null && currentModel != undefined) ? <SwapRightOutlined style={{ fontSize: '16px', color: '#444' }} /> : <></>}
+              {featureTagsOutput.map((f) => (
+                <Tag
+                  {...noDragProps}
+                  key={`out-${f}`}
+                  bordered
+                  style={{
+                    opacity: 1,
+                    marginInlineStart: 0,
+                    fontSize: 12,
+                    lineHeight: "20px",
+                    height: 22,
+                    paddingInline: 8,
+                    color: token.colorTextSecondary,
+                    background: token.colorFillSecondary,
+                    borderColor: token.colorBorderSecondary,
+                    marginRight: 0
+                  }}
+                >
+                  {f}
+                </Tag>
+              ))}
+
+
             </Flex>
           ) : (
             // 🚀 flag=false：Button 一行，Tags 下一行
@@ -212,16 +260,38 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
                   }}
                   onClick={onOpenBotModel}
                 >
-                  {currentModel || "Loading..."}
+                  {currentModel ? truncateTextByVisualWidth(currentModel.id, 32) : "Loading..."}
                 </Button>
               </Flex>
 
               {/* Tags 独立一行 */}
-              <Flex gap={6} wrap="wrap" style={{ marginTop: 0, paddingLeft: 18 }}>
+              <Flex gap={6} wrap="wrap" style={{ marginTop: 0, paddingLeft: 10 }}>
                 {featureTags.map((f) => (
                   <Tag
                     {...noDragProps}
                     key={f}
+                    bordered
+                    style={{
+                      opacity: 1,
+                      marginInlineStart: 0,
+                      fontSize: 12,
+                      lineHeight: "16px",
+                      height: 18,
+                      paddingInline: 6,
+                      color: token.colorTextSecondary,
+                      background: "#eeeeee66",
+                      borderColor: 'transparent',
+                      marginRight: 0
+                    }}
+                  >
+                    {f}
+                  </Tag>
+                ))}
+                {(currentModel != null && currentModel != undefined) ? <SwapRightOutlined style={{ fontSize: '16px', color: '#444' }} /> : <></>}
+                {featureTagsOutput.map((f) => (
+                  <Tag
+                    {...noDragProps}
+                    key={`out-${f}`}
                     bordered
                     style={{
                       opacity: 1,

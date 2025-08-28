@@ -11,7 +11,7 @@ import ChatDock from "./ChatDock";
 const customTheme: ThemeConfig = {
   token: {
     colorPrimaryActive: '#000000',
-    colorPrimary: '#e6b85c'
+    colorPrimary: '#e6b85c',
   },
 
   components: {

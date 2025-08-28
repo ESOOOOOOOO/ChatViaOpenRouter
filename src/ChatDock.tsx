@@ -30,7 +30,7 @@ const ChatDock: React.FC = () => {
   const [botModalOpen, setBotModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [modelList, setModelList] = useState<ModelDto[] | null>(null);
-  const [currentModel, setCurrentModel] = useState('');
+  const [currentModel, setCurrentModel] = useState<ModelDto | null>(null);
   const [systemPrompt, setSystemPrompt] = useState('You are a helpful assistant.');
   const [expanded, setExpanded] = useState(false);
   const [chatTitle, setChatTitle] = useState('New Chat');
@@ -42,38 +42,53 @@ const ChatDock: React.FC = () => {
   const [apiKeyReady, setApiKeyReady] = useState(false);
   const [token, setToken] = useState('');
   const [supportedFeature, setSupportedFeature] = useState<string[]>([]);
+  const [supportedOutputFeature, setSupportedOutputFeature] = useState<string[]>([]);
   const [store, setStore] = useState<Store | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [shortcuts, setShortcuts] = useState<Shortcut[]>([]);
   const [userInfo, setUserInfo] = useState<{ name: string; language: SystemLanguageDto; avatar: string }>(defaultLanguage);
+
   const idCounter = useRef(0);
   const assistantMessageId = useRef<number | null>(null);
   const senderRef = useRef<any>(null);
   const bubbleListRef = useRef<HTMLDivElement>(null);
   const senderDropRef = useRef<HTMLDivElement | null>(null);
+
   const { isDraggingOverSender, files, setFiles } = useSenderDragDrop(senderDropRef, { headerOpen: senderHeaderOpen, onExternalDragEnter: () => setSenderHeaderOpen(true) });
+
   const messagesRef = useRef<MsgDto[]>([]);
   const currentConversationIDRef = useRef<number>(0);
   const storeRef = useRef<Store | null>(null);
   const loadingRef = useRef<boolean>(false);
   const chatTitleRef = useRef<string>('New Chat');
+
   useEffect(() => { messagesRef.current = messages; }, [messages]);
   useEffect(() => { currentConversationIDRef.current = currentConversationID; }, [currentConversationID]);
   useEffect(() => { storeRef.current = store; }, [store]);
   useEffect(() => { loadingRef.current = loading; }, [loading]);
   useEffect(() => { chatTitleRef.current = chatTitle; }, [chatTitle]);
+
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const streamUnlistenRef = useRef<UnlistenFn | null>(null);
+  const streamImageUnlistenRef = useRef<UnlistenFn | null>(null);
   const titleUnlistenRef = useRef<UnlistenFn | null>(null);
   const shownUnlistenRef = useRef<UnlistenFn | null>(null);
   const shortcutMissionUnlistenRef = useRef<UnlistenFn | null>(null);
   const shortcutsUpdatedUnlistenRef = useRef<UnlistenFn | null>(null);
+
   const listenersInitedRef = useRef(false);
   const shortcutsRef = useRef<Shortcut[]>([]);
   useEffect(() => { shortcutsRef.current = shortcuts; }, [shortcuts]);
+
   const handleSubmitRef = useRef<(mission?: ShortcutMission) => boolean>(() => false);
   const shortcutBusyRef = useRef(false);
   const isHeaderDraggingRef = useRef(false);
+
+  // 图片增量缓冲 + 幂等标志
+  const imageBufferRef = useRef<string>(''); 
+  const imageDoneOnceRef = useRef<boolean>(false); // 👈 新增：同一轮只处理一次 DONE
+
   const persistConversations = async (incoming?: Conversation[]) => {
     const s = storeRef.current;
     if (!s) return;
@@ -82,6 +97,7 @@ const ChatDock: React.FC = () => {
     await s.set('conversations', list);
     await s.save();
   };
+
   const kickIdleTimer = () => {
     if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     idleTimerRef.current = setTimeout(() => {
@@ -91,25 +107,30 @@ const ChatDock: React.FC = () => {
       }
     }, 60000);
   };
+
   useEffect(() => {
     if (listenersInitedRef.current) return;
     listenersInitedRef.current = true;
     (async () => {
+      // ========= 文本流 =========
       const unStream = await listen('stream-response', async (event) => {
         const payload = event.payload as string | { chunk?: string };
         const chunk = typeof payload === 'string' ? payload : payload?.chunk ?? '';
         kickIdleTimer();
+
         if (chunk === '[DONE]') {
           if (assistantMessageId.current !== null) {
             setLoading(false);
             assistantMessageId.current = null;
+
             const s = storeRef.current;
             if (!s) return;
             let storedConversations: Conversation[] = (await s.get('conversations')) ?? [];
             const latestMessages = messagesRef.current;
-            if (latestMessages[latestMessages.length - 1]?.content[0].text === '' && latestMessages.length <= 2) {
-              latestMessages[latestMessages.length - 1].content[0].text = 'Current Model/Function is Unavailable';
-              if (chatTitleRef.current === 'New Chat') setChatTitle('Failed to fetch valid response');
+
+            if (latestMessages[latestMessages.length - 1]?.content[0].text === '') {
+              latestMessages[latestMessages.length - 1].content[0].text = userInfo.language.modelOrFuctionUnavilable;
+              if ( latestMessages.length <= 2) setChatTitle(userInfo.language.requestFailed);
             } else {
               const now = Date.now();
               let idx = findIdxByCreateTime(storedConversations, currentConversationIDRef.current);
@@ -126,10 +147,88 @@ const ChatDock: React.FC = () => {
           }
           return;
         }
+
         if (assistantMessageId.current !== null && chunk) {
-          setMessages((prev) => prev.map((msg) => msg.id === assistantMessageId.current ? { ...msg, content: [{ type: 'text', text: (msg.content[0] as any).text + chunk }] as any } : msg));
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === assistantMessageId.current
+                ? { ...msg, content: [{ type: 'text', text: (msg.content[0] as any).text + chunk }] as any }
+                : msg
+            )
+          );
         }
       });
+
+      // ========= 图片流（幂等 + 去重）=========
+      const unStreamImage = await listen('stream-image', async (event) => {
+        const payload = event.payload as { done?: boolean; part?: string; data_url?: string } | string;
+        if (typeof payload === 'string') return;
+
+        if (payload?.done === false && typeof payload?.part === 'string' && payload.part.length > 0) {
+          imageBufferRef.current += payload.part;
+          return;
+        }
+
+        if (payload?.done === true) {
+          // 幂等保护：DONE 只处理一次
+          if (imageDoneOnceRef.current) return;
+          imageDoneOnceRef.current = true;
+
+          const finalUrl = (payload.data_url && payload.data_url.startsWith('data:'))
+            ? payload.data_url
+            : imageBufferRef.current;
+
+          imageBufferRef.current = ''; // 清空缓冲
+
+          if (!finalUrl || !finalUrl.startsWith('data:')) return;
+
+          // 工具：将图片安全地追加到目标 assistant 消息（去重）
+          const appendImageDedup = (list: MsgDto[]): MsgDto[] => {
+            const targetId =
+              assistantMessageId.current !== null
+                ? assistantMessageId.current
+                : [...list].reverse().find((m) => m.role === 'assistant')?.id ?? null;
+            if (targetId === null) return list;
+
+            return list.map((msg) => {
+              if (msg.id !== targetId) return msg;
+
+              const exists = (msg.content || []).some(
+                (p: any) => p?.type === 'image_url' && p?.image_url?.url === finalUrl
+              );
+              if (exists) return msg; // 已存在同 URL，跳过
+
+              const nextContent = [...msg.content, { type: 'image_url', image_url: { url: finalUrl } }] as any;
+              return { ...msg, content: nextContent };
+            });
+          };
+
+          // 1) 更新状态并在同一时刻持久化“最新版本”，避免再对旧副本做二次 append
+          setMessages((prev) => {
+            const updated = appendImageDedup(prev);
+
+            // 同步持久化（使用 updated，而不是 messagesRef.current）
+            (async () => {
+              const s = storeRef.current;
+              if (!s) return;
+              let storedConversations: Conversation[] = (await s.get('conversations')) ?? [];
+              const now = Date.now();
+              let idx = findIdxByCreateTime(storedConversations, currentConversationIDRef.current);
+              if (idx === -1) {
+                const createTime = currentConversationIDRef.current || now;
+                const conv: Conversation = { title: chatTitleRef.current || 'New Chat', createTime, lastUpdateTime: now, messages: updated };
+                storedConversations = [conv, ...storedConversations];
+              } else {
+                storedConversations[idx] = { ...storedConversations[idx], messages: updated, lastUpdateTime: now };
+              }
+              await persistConversations(storedConversations);
+            })();
+
+            return updated;
+          });
+        }
+      });
+
       const unTitle = await listen('update_chat_title', async (event: any) => {
         const response = event.payload as ChatCompletion;
         const newTitle = response?.choices?.[0]?.message?.content?.trim();
@@ -144,13 +243,20 @@ const ChatDock: React.FC = () => {
           if (chatTitleRef.current === 'New Chat') setChatTitle(newTitle);
         }
       });
+
       streamUnlistenRef.current = unStream;
+      streamImageUnlistenRef.current = unStreamImage;
       titleUnlistenRef.current = unTitle;
     })();
+
     return () => {
       if (streamUnlistenRef.current) {
         streamUnlistenRef.current();
         streamUnlistenRef.current = null;
+      }
+      if (streamImageUnlistenRef.current) {
+        streamImageUnlistenRef.current();
+        streamImageUnlistenRef.current = null;
       }
       if (titleUnlistenRef.current) {
         titleUnlistenRef.current();
@@ -158,8 +264,8 @@ const ChatDock: React.FC = () => {
       }
     };
   }, []);
-  const pinedRef = useRef(pined);
 
+  const pinedRef = useRef(pined);
   useEffect(() => { pinedRef.current = pined; }, [pined]);
 
   useEffect(() => {
@@ -233,24 +339,33 @@ const ChatDock: React.FC = () => {
   useEffect(() => {
     const setup = async () => {
       const storeInstance = await Store.load('store.json');
+
+      // await storeInstance.clear()
       setStore(storeInstance);
+
       storeRef.current = storeInstance;
+
       const savedConvs: Conversation[] = (await storeInstance.get('conversations')) ?? [];
       setConversations(sortByLastUpdateDesc(savedConvs));
+
       let apiKey = await storeInstance.get('api_key');
       if (apiKey != undefined && apiKey != null && apiKey != '') {
         setToken(apiKey as string);
         setApiKeyReady(true);
       }
+
       const models = await fetchOpenRouterModels();
+      console.log('Fetched models:', models);
       setModelList(models);
-      let modelId = await storeInstance.get<string>('current_model');
-      if (!modelId) {
-        modelId = 'openai/gpt-5-chat';
-        await storeInstance.set('current_model', modelId);
+
+      let model = await storeInstance.get<ModelDto>('current_model');
+      if (!model) {
+        await storeInstance.set('current_model', models[0]);
         await storeInstance.save();
+        model = models[0];
       }
-      setCurrentModel(modelId);
+      console.log('Current model:', model);
+      setCurrentModel(model);
 
       let currentShortcut = (await storeInstance.get('shortcuts')) as Shortcut[];
       if (!currentShortcut) {
@@ -264,15 +379,18 @@ const ChatDock: React.FC = () => {
       } else {
         setShortcuts(currentShortcut);
       }
+
       let userInfo = (await storeInstance.get('user_info')) as { name: string; language: SystemLanguageDto; avatar: string };
       if (userInfo) {
         setUserInfo(userInfo);
       }
+
       const now = Date.now();
       setCurrentConversationID(now);
       currentConversationIDRef.current = now;
     };
     setup();
+
     return () => {
       if (idleTimerRef.current) {
         clearTimeout(idleTimerRef.current);
@@ -285,10 +403,13 @@ const ChatDock: React.FC = () => {
 
   useEffect(() => {
     if (!modelList || !currentModel) return;
-    const m = modelList.find((x) => x.id === currentModel);
-    const list = m?.architecture?.input_modalities && m.architecture.input_modalities.length > 0 ? m.architecture.input_modalities : ['text'];
-    setSupportedFeature(list.map((v) => String(v)));
+    const m = modelList.find((x) => x.id === currentModel.id);
+    const allowedInput = m?.architecture?.input_modalities && m.architecture.input_modalities.length > 0 ? m.architecture.input_modalities : ['text'];
+    const allowedOutput = m?.architecture?.output_modalities && m.architecture.output_modalities.length > 0 ? m.architecture.output_modalities : ['text'];
+    setSupportedFeature(allowedInput.map((v) => String(v)));
+    setSupportedOutputFeature(allowedOutput.map((v) => String(v)));
   }, [modelList, currentModel]);
+
   useEffect(() => {
     if (messages.length === 0) return;
     requestAnimationFrame(() => {
@@ -303,9 +424,11 @@ const ChatDock: React.FC = () => {
     try {
       let storedConversations: Conversation[] = (await store.get('conversations')) ?? [];
       const updatedConversations = storedConversations.filter((conv) => conv.createTime !== conversationTime);
+
       if (chatTitle !== 'Failed to fetch valid response' && messages.length <= 3) {
         await persistConversations(updatedConversations);
       }
+
       if (currentConversationID === conversationTime) {
         setMessages([]);
         setChatTitle('New Chat');
@@ -323,6 +446,9 @@ const ChatDock: React.FC = () => {
     setChatTitle(conversation.title);
     setLoading(false);
     assistantMessageId.current = null;
+    // 进入旧会话时，避免误用上一次的图片流状态
+    imageBufferRef.current = '';
+    imageDoneOnceRef.current = false;
     senderRef.current?.focus();
   };
 
@@ -347,67 +473,52 @@ const ChatDock: React.FC = () => {
     setLoading(false);
     assistantMessageId.current = null;
     setFiles([]);
+    imageBufferRef.current = '';
+    imageDoneOnceRef.current = false;
   };
 
-  // ✅ 精简：直接把 encodedMeta.payload 丢进消息（不再做 Office 的二次异步解析）
-// ✅ 文本型附件（textable，包括 docx 解析出的文本）：
-//    - 发送给 GPT：仍然是 { type: 'text', text: '...' }
-//    - 渲染到 UI：附加 meta = { kind: 'textable', filename, bytes }，由 MessageList 显示为文件卡片
-const buildUserContentWithAttachments = (mission?: any) => {
-  type FileItemLike = UploadFile & {
-    encodedMeta?: (
-      | { kind: 'image'; payload: { type: 'image_url'; image_url: { url: string } } }
-      | { kind: 'pdf'; payload: { type: 'file'; file: { filename: string; file_data: string } } }
-      | { kind: 'audio'; payload: { type: 'input_audio'; input_audio: { data: string; format: string } } }
-      | { kind: 'textable'; payload: { type: 'text'; text: string } } // 这里的 textable 包含 .docx 解析为文本的情况
-    )
-  };
+  // 组装用户消息（保持你原有逻辑）
+  const buildUserContentWithAttachments = (mission?: any) => {
+    type FileItemLike = UploadFile & {
+      encodedMeta?: (
+        | { kind: 'image'; payload: { type: 'image_url'; image_url: { url: string } } }
+        | { kind: 'pdf'; payload: { type: 'file'; file: { filename: string; file_data: string } } }
+        | { kind: 'audio'; payload: { type: 'input_audio'; input_audio: { data: string; format: string } } }
+        | { kind: 'textable'; payload: { type: 'text'; text: string } }
+      )
+    };
 
-  // 用 any 宽化类型，以便注入 meta 字段（仅影响前端渲染，不影响请求体语义）
-  const parts: any[] = [];
+    const parts: any[] = [];
+    const userText = mission ? String(mission.content ?? '') : inputValue.trim();
+    if (userText) parts.push({ type: 'text', text: userText });
 
-  // 普通输入区内容：不带 meta（在 UI 中正常展示）
-  const userText = mission ? String(mission.content ?? '') : inputValue.trim();
-  if (userText) {
-    parts.push({ type: 'text', text: userText });
-  }
+    for (const f of (files as FileItemLike[])) {
+      if (f.status !== 'done' || !f.encodedMeta) continue;
+      const payload: any = (f.encodedMeta as any).payload;
 
-  // 附件内容
-  for (const f of (files as FileItemLike[])) {
-    if (f.status !== 'done' || !f.encodedMeta) continue;
+      if (payload?.type === 'text') {
+        const filename = f.name ?? 'document.txt';
+        const bytes =
+          typeof payload.text === 'string'
+            ? new Blob([payload.text]).size
+            : (f.size ?? 0);
 
-    const payload: any = (f.encodedMeta as any).payload;
-
-    // 如果是“文本型附件”（含 .docx 解析出的文本），给它打上 meta 标记：
-    // - 这样 MessageList 会把它当“文件卡片”渲染（不展示正文）
-    // - 但消息本体依旧是文本，仍能完整提交给 GPT
-    if (payload?.type === 'text') {
-      const filename = f.name ?? 'document.txt';
-      // 尽量给出一个 size，便于 FileCard 显示
-      const bytes =
-        typeof payload.text === 'string'
-          ? new Blob([payload.text]).size
-          : (f.size ?? 0);
-
-      parts.push({
-        type: 'text',
-        text: payload.text,
-        meta: { kind: 'textable', filename, bytes }, // 👈 关键：用于 UI 隐藏正文、显示文件卡
-      });
-      continue;
+        parts.push({
+          type: 'text',
+          text: payload.text,
+          meta: { kind: 'textable', filename, bytes },
+        });
+        continue;
+      }
+      parts.push(payload);
     }
-
-    // 其它类型（图片直链 / 二进制文件 / 音频）原样透传
-    parts.push(payload);
-  }
-
-  return parts;
-};
-
+    return parts;
+  };
 
   const handleSubmit = (mission?: any): boolean => {
     if (loadingRef.current) return false;
     if (!mission && inputValue.trim() === '' && (files?.length ?? 0) === 0) return false;
+
     if (mission) {
       setChatTitle('Shortcut Mission');
       const now = Date.now();
@@ -415,17 +526,25 @@ const buildUserContentWithAttachments = (mission?: any) => {
       setMessages([]);
       setFiles([]);
     }
+
+    // 重置图片状态（非常重要）
+    imageBufferRef.current = '';
+    imageDoneOnceRef.current = false;
+
     setLoading(true);
     kickIdleTimer();
+
     const userContent = mission ? buildUserContentWithAttachments(mission) : buildUserContentWithAttachments();
     const userMessage: MsgDto = { id: idCounter.current++, content: userContent, role: 'user' };
     const newAssistantMessageId = idCounter.current++;
     const assistantMessage: MsgDto = { id: newAssistantMessageId, content: [{ type: 'text', text: '' }], role: 'assistant' };
     assistantMessageId.current = newAssistantMessageId;
+
     const newMessages = [...messagesRef.current, userMessage, assistantMessage];
     setMessages(newMessages);
     setInputValue('');
     setFiles([]);
+
     (async () => {
       try {
         const s = storeRef.current;
@@ -445,6 +564,7 @@ const buildUserContentWithAttachments = (mission?: any) => {
       } catch (err) {
         console.error('Pre-persist conversations error:', err);
       }
+
       const history: any[] = [{ role: 'system', content: systemPrompt }];
       for (const msg of newMessages.slice(0, -1)) {
         if (msg.role === 'user' && msg.id === userMessage.id) {
@@ -454,27 +574,35 @@ const buildUserContentWithAttachments = (mission?: any) => {
         }
       }
       const body = { messages: history, stream: true } as const;
+
       try {
         if (goOnline) {
-          await invoke('proxy_stream', { body, model: currentModel + ':online', token });
+          await invoke('proxy_stream', { body, model: currentModel!.id + ':online', token });
         } else {
-          await invoke('proxy_stream', { body, model: currentModel, token });
+          await invoke('proxy_stream', { body, model: currentModel!.id, token });
         }
       } catch (error: any) {
         console.error('Tauri command error:', error);
         setLoading(false);
-        setMessages((prev) => prev.map((msg) => msg.id === newAssistantMessageId ? { ...msg, content: [{ type: 'text', text: 'Error fetching response' }] } : msg));
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === newAssistantMessageId
+              ? { ...msg, content: [{ type: 'text', text: 'Error fetching response' }] }
+              : msg
+          )
+        );
       }
     })();
+
     return true;
   };
 
   useEffect(() => { handleSubmitRef.current = handleSubmit; }, [handleSubmit]);
 
-  const changeCurrentModel = async (modelId: string) => {
+  const changeCurrentModel = async (model: ModelDto) => {
     if (!store) return;
-    setCurrentModel(modelId);
-    await store.set('current_model', modelId);
+    setCurrentModel(model);
+    await store.set('current_model', model);
     await store.save();
   };
 
@@ -501,6 +629,7 @@ const buildUserContentWithAttachments = (mission?: any) => {
           onOpenSettingModel={async () => { setSettingModelOpen(true); }}
           onToggleExpand={onToggleExpand}
           supportedFeature={supportedFeature}
+          supportedOutputFeature={supportedOutputFeature}
           apiKeyReady={apiKeyReady}
           language={userInfo.language}
           onDraggingChange={(dragging) => { isHeaderDraggingRef.current = dragging; }}
@@ -544,6 +673,7 @@ const buildUserContentWithAttachments = (mission?: any) => {
         modelList={modelList}
         onModelChange={changeCurrentModel}
         setSupportedFeature={(features: string[]) => { setSupportedFeature(features); }}
+        setSupportedOutputFeature={(features: string[]) => { setSupportedOutputFeature(features); }}
         language={userInfo.language}
       />
       <SettingModel

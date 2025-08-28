@@ -4,6 +4,8 @@ import React, {
   useEffect,
   useTransition,
   useDeferredValue,
+  useMemo,
+  useCallback,
 } from 'react';
 import {
   Modal,
@@ -30,12 +32,13 @@ import { SystemLanguageDto } from '../DTOs/systemLanguage.dto';
 interface SettingsModalProps {
   open: boolean;
   onCancel: () => void;
-  currentModel: string;
+  currentModel: ModelDto | null;
   systemPrompt: string;
   onSystemPromptChange: (value: string) => void;
   modelList: ModelDto[] | null;
-  onModelChange: (modelId: string) => void;
+  onModelChange: (modelId: ModelDto) => void;
   setSupportedFeature:(features:string[])=>void;
+  setSupportedOutputFeature:(features:string[])=>void;
   expanded:boolean;
   language:SystemLanguageDto;
 }
@@ -94,6 +97,7 @@ const BotModal: React.FC<SettingsModalProps> = ({
   modelList,
   onModelChange,
   setSupportedFeature,
+  setSupportedOutputFeature,
   expanded,
   language
 }) => {
@@ -302,7 +306,43 @@ const BotModal: React.FC<SettingsModalProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
-  const columns1: ColumnsType<ModelDto> = [
+  // ========= 最稳妥：乐观选中 + 稳定 columns =========
+  const [optimisticId, setOptimisticId] = useState<string | null>(null);
+
+  // 当父组件真正把 currentModel 更新回来时，清掉本地乐观值（可选，但更干净）
+  useEffect(() => {
+    if (currentModel?.id) {
+      setOptimisticId(null);
+    }
+  }, [currentModel?.id]);
+
+  const isSelected = useCallback(
+    (rec: ModelDto) => ((currentModel?.id ?? optimisticId) === rec.id),
+    [currentModel?.id, optimisticId]
+  );
+
+  const handleChoose = useCallback((rec: ModelDto) => {
+    // 先乐观设置，立即稳定 UI
+    setOptimisticId(rec.id);
+
+    // 再调用父回调与其他派生更新
+    onModelChange(rec);
+
+    const supportedInputs =
+      (rec?.architecture?.input_modalities && rec.architecture.input_modalities.length > 0)
+        ? rec.architecture.input_modalities
+        : ['text'];
+    setSupportedFeature(supportedInputs.map(v => String(v)));
+
+    const supportedOutputs =
+      (rec?.architecture?.output_modalities && rec.architecture.output_modalities.length > 0)
+        ? rec.architecture.output_modalities
+        : ['text'];
+    setSupportedOutputFeature(supportedOutputs.map(v => String(v)));
+  }, [onModelChange, setSupportedFeature, setSupportedOutputFeature]);
+
+  // —— columns: 用 useMemo 稳定引用，减少闭包抖动 —— //
+  const columns1: ColumnsType<ModelDto> = useMemo(() => ([
     {
       title: language.modelTag,
       key: 'model',
@@ -357,6 +397,24 @@ const BotModal: React.FC<SettingsModalProps> = ({
       },
     },
     {
+      title: "Output",
+      dataIndex: ['architecture', 'output_modalities'],
+      key: 'modalities',
+      width: 180,
+      render: (_: unknown, record) => {
+        const list = record?.architecture?.output_modalities?.length
+          ? record.architecture.output_modalities
+          : ['text'];
+        return (
+          <Space size={[4, 4]} wrap>
+            {list.map((m) => (
+              <Tag key={m}>{m}</Tag>
+            ))}
+          </Space>
+        );
+      },
+    },
+    {
       title: language.releaseDate,
       dataIndex: 'created',
       key: 'created',
@@ -366,27 +424,32 @@ const BotModal: React.FC<SettingsModalProps> = ({
     {
       title: language.operation,
       key: 'action',
-      width: 100,
-      render: (_: unknown, record) => (
-        <Button
-          type={currentModel === record.id ? 'primary' : 'default'}
-          size="small"
-          onClick={() => {
-            onModelChange(record.id);
-            const list =
-              (record?.architecture?.input_modalities && record.architecture.input_modalities.length > 0)
-                ? record.architecture.input_modalities
-                : ['text']; // 回退，保证选择后也一定有值
-            setSupportedFeature(list.map(v => String(v)));
-          }}
-        >
-          {currentModel === record.id ? language.selected : language.select}
-        </Button>
-      ),
-    },
-  ];
+      width: 80,
+      render: (_: unknown, record) => {
+        const selected = isSelected(record);
+        const label = selected
+          ? (language?.selected ?? 'Selected')
+          : (language?.select ?? 'Select');
 
-   const columns2: ColumnsType<ModelDto> = [
+        return (
+          <Button
+            type={selected ? 'primary' : 'default'}
+            size="small"
+            onClick={() => handleChoose(record)}
+          >
+            {label}
+          </Button>
+        );
+      },
+    },
+  ]), [
+    isSelected,
+    handleChoose,
+    token.colorTextSecondary,
+    language
+  ]);
+
+  const columns2: ColumnsType<ModelDto> = useMemo(() => ([
     {
       title: language.modelTag,
       key: 'model',
@@ -425,25 +488,30 @@ const BotModal: React.FC<SettingsModalProps> = ({
     {
       title: language.operation,
       key: 'action',
-      width: 100,
-      render: (_: unknown, record) => (
-        <Button
-          type={currentModel === record.id ? 'primary' : 'default'}
-          size="small"
-          onClick={() => {
-            onModelChange(record.id);
-            const list =
-              (record?.architecture?.input_modalities && record.architecture.input_modalities.length > 0)
-                ? record.architecture.input_modalities
-                : ['text']; // 回退，保证选择后也一定有值
-            setSupportedFeature(list.map(v => String(v)));
-          }}
-        >
-          {currentModel === record.id ? language.select : language.select}
-        </Button>
-      ),
+      width: 80,
+      render: (_: unknown, record) => {
+        const selected = isSelected(record);
+        const label = selected
+          ? (language?.selected ?? 'Selected')
+          : (language?.select ?? 'Select');
+
+        return (
+          <Button
+            type={selected ? 'primary' : 'default'}
+            size="small"
+            onClick={() => handleChoose(record)}
+          >
+            {label}
+          </Button>
+        );
+      },
     },
-  ];
+  ]), [
+    isSelected,
+    handleChoose,
+    token.colorTextSecondary,
+    language
+  ]);
 
   // === 统一外层高度 ===
   const OUTER_STYLE: React.CSSProperties = {
@@ -657,7 +725,7 @@ const BotModal: React.FC<SettingsModalProps> = ({
   const tableTab = (
     <div style={OUTER_STYLE}>
       <div style={{ marginBottom: 8 }}>
-        <h4 style={{ marginBottom: 12 }}>{language.currentModel}: {currentModel || 'Loading...'}</h4>
+        <h4 style={{ marginBottom: 12 }}>{language.currentModel}: {currentModel?.id || 'Loading...'}</h4>
       </div>
 
       <Form
@@ -695,7 +763,7 @@ const BotModal: React.FC<SettingsModalProps> = ({
       <div style={SCROLL_AREA_STYLE_MODELS}>
         <Table<ModelDto>
           rowKey={(r) => r.id}
-          columns={expanded?columns1:columns2}
+          columns={expanded ? columns1 : columns2}
           dataSource={activeTab === 'models' ? viewData : []}
           size="small"
           pagination={false}
@@ -706,14 +774,14 @@ const BotModal: React.FC<SettingsModalProps> = ({
             (uiLoading || isPending || computing || !deferredModelList)
           }
           locale={{ emptyText: activeTab === 'models' ? language.noModelAvailable : '' }}
-          scroll={{ y: 330 }}
+          scroll={{ y: expanded?330:280 }}
           rowClassName={() => 'compact-row'}
           onRow={(record) => {
             const colors = providerToColor(record.id);
             return {
               style: {
                 background:
-                  currentModel === record.id ? token.colorFillSecondary : undefined,
+                  (currentModel?.id === record.id) ? token.colorFillSecondary : undefined,
                 boxShadow: `inset 2px 0 0 0 ${colors?.brand || token.colorPrimary}`,
               },
             };
@@ -728,7 +796,7 @@ const BotModal: React.FC<SettingsModalProps> = ({
       open={open}
       onCancel={onCancel}
       footer={null}
-      width={700}
+      width={expanded?900:720}
       destroyOnHidden
       mask={false}
       centered

@@ -88,19 +88,38 @@ export interface SystemLanguageDto {
   modelSettingsSaved: string;
   promptHolder: string;
   operation: string;
-  selected:string;
-  enterToSubmit:string;
-    verifyFirst:string;
-    pricing:string;
-    contextLength:string;
-    usernamePlaceHolder:string;
-    statistics:string;
-    sponsorship:string;
-    buyMeACoffee:string;
+  selected: string;
+  enterToSubmit: string;
+  verifyFirst: string;
+  pricing: string;
+  contextLength: string;
+  usernamePlaceHolder: string;
+  statistics: string;
+  sponsorship: string;
+  buyMeACoffee: string;
+  requestFailed: string;
+  success: string;
+  failed: string;
+  applyingFreeApiKey: string;
+  getFreeApiKey: string;
+  freeApikeyTip: string;
+  freeKeyApplySuccess: string;
+  verifySuccess: string;
+  netWorkError: string;
+  invalidKey: string;
+  image: string;
+  audio: string;
+  file: string;
+  text: string;
+  userInfoUpdated: string;
+  userInfoUpdateFailed: string;
+  uploadFiles: string;
+  uploadFilesTip: string;
+  modelOrFuctionUnavilable: string;
 }
 
-export interface  UserInfo {
-    name: string;
-    language: SystemLanguageDto;
-    avatar: string; // dataURL 或本地路径；为空时显示默认灰头像
+export interface UserInfo {
+  name: string;
+  language: SystemLanguageDto;
+  avatar: string; // dataURL 或本地路径；为空时显示默认灰头像
 };
